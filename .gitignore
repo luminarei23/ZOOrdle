@@ -1,0 +1,62 @@
+# Build directories
+bin/
+obj/
+Debug/
+Release/
+
+# MonoGame Content Builder outputs
+Content/bin/
+Content/obj/
+MonoGameLibrary/bin/
+MonoGameLibrary/obj/
+
+# User-specific files
+*.user
+*.suo
+*.userprefs
+*.csproj.user
+*.unityproj
+*.pidb
+*.booproj
+*.svd
+*.pdb
+
+# VS Code
+.vscode/
+
+# Visual Studio
+*.sln.docstates
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# NuGet
+*.nupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+*.snupkg
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Fonts 
+fonts/
+*.ttf
+*.otf
+
+# Images / Content
+**/Content/bin/
+**/Content/obj/
+
+# Others
+*.cache
+*.bak
+*.swp
+bin/Debug/net9.0/Zoordle.deps.json
