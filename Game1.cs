@@ -6,12 +6,21 @@ using Microsoft.Xna.Framework.Input;
 using MonoGameLibrary;
 using MonoGameLibrary.Graphics;
 using MonoGameLibrary.Input;
+using MonoGameLibrary.Buttons;
 
 namespace Zoordle;
 
 public class Game1 : Core
 {
     private Sprite _background;
+
+    private SpriteFont _font;
+
+    private int _letters_position;
+
+    private Vector2 _letterTextPosition;
+
+    private Vector2 _letterTextOrigin;
 
     // private Tilemap _tilemap;
     
@@ -22,8 +31,9 @@ public class Game1 : Core
 
     protected override void Initialize()
     {
-        // TODO: Add your initialization logic here
         base.Initialize();
+
+       // _letterTextPosition = new Vector2()
 
     }
 
@@ -48,7 +58,18 @@ public class Game1 : Core
 
         base.Update(gameTime);
     }
-
+    // private void CheckLetterState()
+    // {
+    //     if (Bounds.Contains(mouse.Position) &&
+    //         mouse.LeftButton == ButtonState.Pressed)
+    //     {
+    //         IsClicked = true;
+    //     }
+    //     else
+    //     {
+    //         IsClicked = false;
+    //     }
+    // }
     private void CheckKeyboardInput()
     {
 
@@ -93,6 +114,30 @@ public class Game1 : Core
 
         // Draw the tilemap.
         // _tilemap.Draw(SpriteBatch);
+                // Loading a SpriteFont Description using the content pipeline
+        SpriteFont font = Content.Load<SpriteFont>("fonts/fonts");
+        string message = "ZOORDLE";
+
+        //Vector2 textSize = SpriteFont.MeasureString(message);
+
+        // Position will be the center of the screen.
+        Vector2 position = new Vector2(
+            GraphicsDevice.PresentationParameters.BackBufferWidth,
+            GraphicsDevice.PresentationParameters.BackBufferHeight
+        ) * 0.5f;
+
+        SpriteBatch.DrawString(
+            font,                   // font
+            message,     // text
+            Vector2.Zero,           // position
+            Color.White,            // color
+            0.0f,                   // rotation
+            Vector2.Zero,           // origin
+            Vector2.One,            // scale
+            SpriteEffects.None,     // effects
+            0.0f                    // layerDepth            // color
+    );
+
 
         _background.Draw(SpriteBatch, Vector2.Zero);
 

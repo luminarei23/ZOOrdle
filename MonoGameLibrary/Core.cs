@@ -1,15 +1,26 @@
 using System;
+using System.ComponentModel;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGameLibrary.Input;
+using MonoGameLibrary.Scenes;
 
 namespace MonoGameLibrary;
 
 public class Core : Game
 {
+    /// <summary>
+    /// Gets a reference to the Core instance.
+    /// </summary>
     internal static Core s_instance;
+
+    // The scene that is currently active.
+    private static Scene s_activeScene;
+
+    // The next scene to switch to, if there is one.
+    private static Scene s_nextScene;
 
     /// <summary>
     /// Gets a reference to the Core instance.
@@ -106,6 +117,12 @@ public class Core : Game
         // Create a new input manager
         Input = new InputManager();
     }
+
+    protected override void UnloadContent()
+    {
+        base.UnloadContent();
+    }
+
     protected override void Update(GameTime gameTime)
     {
         // Update the input manager.
@@ -116,6 +133,54 @@ public class Core : Game
             Exit();
         }
 
+        // if there is a next scene waiting to be switch to, then transition
+        // to that scene.
+        if (s_nextScene != null)
+        {
+            TransitionScene();
+        }
+
+        // If there is an active scene, update it.
+        if (s_activeScene != null)
+        {
+            s_activeScene.Update(gameTime);
+        }
+
         base.Update(gameTime);
+    }
+
+    protected override void Draw(GameTime gameTime)
+    {
+        if(s_activeScene != null)
+        {
+            s_activeScene.Draw(gameTime);
+        }
+
+        base.Draw(gameTime);
+    }
+
+    public static void ChangeScene(Scene next)
+    {
+        if(s_activeScene != next)
+        {
+            s_nextScene = next;
+        }
+    }
+
+    private static void TransitionScene()
+    {
+        if(s_activeScene != null)
+        {
+            s_activeScene.Dispose();
+        }
+
+        GC.Collect();
+        s_activeScene = s_nextScene;
+        s_nextScene = null;
+
+        if(s_activeScene != null)
+        {
+            s_activeScene.Initialize();
+        }
     }
 }
