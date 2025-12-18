@@ -19,6 +19,11 @@ public class Sprite
         Region = region;
     }
 
+    public Sprite(Texture2D texture)
+    {
+        Region = new TextureRegion(texture, 0, 0, texture.Width, texture.Height);
+    }
+
     /// <summary>
     /// Sets the origin of this sprite to the center.
     /// </summary>
@@ -36,6 +41,12 @@ public class Sprite
     {
         Region.Draw(spriteBatch, position, Color, Rotation, Origin, Scale, Effects, LayerDepth);
     }
+
+    public void Draw(SpriteBatch spriteBatch)
+    {
+        Draw(spriteBatch, Position);
+    }
+    public Vector2 Position;
 
     /// <summary>
     /// Gets or Sets the source texture region represented by this sprite.

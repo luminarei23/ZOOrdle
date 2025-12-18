@@ -89,61 +89,37 @@ public class TextureAtlas
     }
 
     /// <summary>
-    /// Creates a new texture atlas based on a texture atlas xml configuration file.
+    /// Creates a new texture atlas based on a defined grid lauyout.
     /// </summary>
-    /// <param name="content">The content manager used to load the texture for the atlas.</param>
-    /// <param name="fileName">The path to the xml file, relative to the content root directory.</param>
+    /// <param name="texture">The texture loaded into grid atlas.</param>
+    /// <param name="tileWidth">The width of single tile.</param>
+    /// <param name="tileHeight">The height of single tile.</param>
+    /// <param name="prefix">prefix used for categorizing slices.</param>
     /// <returns>The texture atlas created by this method.</returns>
-    public static TextureAtlas FromFile(ContentManager content, string fileName)
+    public static TextureAtlas FromGrid(Texture2D texture, int tileWidth, int tileHeight, string prefix = "tile")
     {
-        TextureAtlas atlas = new TextureAtlas();
+        var atlas = new TextureAtlas(texture);
 
-        string filePath = Path.Combine(content.RootDirectory, fileName);
+        int columns = texture.Width / tileWidth;
+        int rows = texture.Height / tileHeight;
 
-        using (Stream stream = TitleContainer.OpenStream(filePath))
+        int index = 0;
+
+        for(int y = 0; y < rows; y++)
         {
-            using (XmlReader reader = XmlReader.Create(stream))
+            for(int x = 0; x < columns; x++)
             {
-                XDocument doc = XDocument.Load(reader);
-                XElement root = doc.Root;
-
-                // The <Texture> element contains the content path for the Texture2D to load.
-                // So we will retrieve that value then use the content manager to load the texture.
-                string texturePath = root.Element("Texture").Value;
-                atlas.Texture = content.Load<Texture2D>(texturePath);
-
-                // The <Regions> element contains individual <Region> elements, each one describing
-                // a different texture region within the atlas.  
-                //
-                // Example:
-                // <Regions>
-                //      <Region name="spriteOne" x="0" y="0" width="32" height="32" />
-                //      <Region name="spriteTwo" x="32" y="0" width="32" height="32" />
-                // </Regions>
-                //
-                // So we retrieve all of the <Region> elements then loop through each one
-                // and generate a new TextureRegion instance from it and add it to this atlas.
-                var regions = root.Element("Regions")?.Elements("Region");
-
-                if (regions != null)
-                {
-                    foreach (var region in regions)
-                    {
-                        string name = region.Attribute("name")?.Value;
-                        int x = int.Parse(region.Attribute("x")?.Value ?? "0");
-                        int y = int.Parse(region.Attribute("y")?.Value ?? "0");
-                        int width = int.Parse(region.Attribute("width")?.Value ?? "0");
-                        int height = int.Parse(region.Attribute("height")?.Value ?? "0");
-
-                        if (!string.IsNullOrEmpty(name))
-                        {
-                            atlas.AddRegion(name, x, y, width, height);
-                        }
-                    }
-                }
-
-                return atlas;
+                atlas.AddRegion($"{prefix}_{index}", x * tileWidth, y * tileHeight, tileWidth, tileHeight);
+                index++;
             }
         }
+        return atlas;
+    }
+
+    public TextureRegion GetLetter(char letter)
+    {
+        letter = char.ToUpper(letter);
+        int index = letter - 'A';
+        return _regions[$"letter_{index}"];
     }
 }
