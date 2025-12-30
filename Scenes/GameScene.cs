@@ -69,7 +69,7 @@ namespace Zoordle.Scenes
 
         int totalRows = (int)Math.Ceiling(_lettersInPlay.Length / (float)LETTER_COLUMNS);
 
-        Vector2 startPosition = new Vector2(250,650);
+        Vector2 startPosition = new Vector2(350,650);
 
         for (int i = 0; i < _lettersInPlay.Length; i++)
         {
@@ -125,19 +125,6 @@ namespace Zoordle.Scenes
         // Begin the sprite batch to prepare for rendering.
         Core.SpriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
-        // Draw the score.
-        Core.SpriteBatch.DrawString(
-            _font,              // spriteFont
-            $"Score {_score}", // text
-            _scoreTextPosition, // position
-            Color.White,        // color
-            0.0f,               // rotation
-            _scoreTextOrigin,   // origin
-            1.0f,               // scale
-            SpriteEffects.None, // effects
-            0.0f                // layerDepth
-        );
-
         DisplayAllLetters();
 
         // Always end the sprite batch when finished.
@@ -147,21 +134,12 @@ namespace Zoordle.Scenes
 
     private const int LETTER_COLUMNS = 9;
 
-    private const int SPACING = 8;
+    private const int SPACING = 67;
 
-    private const float LETTER_SCALE = 1.8f;
+    private const float LETTER_SCALE = 1.0f;
     
     // The SpriteFont Description used to draw text
     private SpriteFont _font;
-
-    // Tracks the players score.
-    private int _score;
-
-    // Defines the position to draw the score text at.
-    private Vector2 _scoreTextPosition;
-
-    // Defines the origin used when drawing the score text.
-    private Vector2 _scoreTextOrigin;
 
     // The Sprite2d used for the all letter tiles.
     private Texture2D _letterTileset;

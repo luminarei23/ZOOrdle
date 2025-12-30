@@ -20,9 +20,6 @@
 /processorParam:TextureFormat=Compressed
 /build:fonts/fonts.spritefont
 
-#begin images/atlas-definition.xml
-/copy:images/atlas-definition.xml
-
 #begin images/background.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -46,6 +43,42 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:images/credits_sign.png
+
+#begin images/empty_box.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:images/empty_box.png
+
+#begin images/letter_background.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:images/letter_background.png
+
+#begin images/letters.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:images/letters.png
 
 #begin images/logo.png
 /importer:TextureImporter
@@ -82,7 +115,4 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:images/quit_sign.png
-
-#begin images/tilemap-definition.xml
-/copy:images/tilemap-definition.xml
 
