@@ -1,83 +1,220 @@
 using System;
 using System.Collections.Generic;
 using System.Security.Principal;
+using Microsoft.VisualBasic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGameLibrary;
+using MonoGameLibrary.Buttons;
 using MonoGameLibrary.Graphics;
 using MonoGameLibrary.Input;
 using MonoGameLibrary.Scenes;
 
 
-namespace Zoordle.Scenes
-{
-    public class GameScene : Scene
-    {
+namespace Zoordle.Scenes;
 
+public class GameScene : Scene
+{   
     public override void Initialize()
     {
-        // LoadContent is called during base.Initialize().
         base.Initialize();
-
-        // Initialize list for sprites spliced later
-        _letterSprites = new List<Texture2D> {};
-        _letterSourceRect = new Rectangle(0, 0, LETTER_SIZE, LETTER_SIZE);
-
-        // During the game scene, we want to disable exit on escape. Instead,
-        // the escape key will be used to return back to the title screen
         Core.ExitOnEscape = false;
 
+        _currentGuess = new GuessBox[5];
+        _guessIndex = 0;
+
+        for (int i = 0; i < _currentGuess.Length; i++)
+        {
+            _currentGuess[i] = new GuessBox
+            {
+                Letter = '\0',
+                Color = Color.White
+            };
+        }
     }
 
     public override void LoadContent()
     {
-        // Load the font.
         _font = Core.Content.Load<SpriteFont>("fonts/fonts");
-
-        // Set up the letter tileset sprite.
         _letterTileset = Core.Content.Load<Texture2D>("images/letters");
+        _guessBoxTileset = Core.Content.Load<Texture2D>("images/empty_box");
+        _animalBg = Core.Content.Load<Texture2D>("images/animal_bg");
 
+        _animalTextures = new Dictionary<string, Texture2D>
+        {
+            { "chaki", Core.Content.Load<Texture2D>("images/chaki")},
+            { "drago", Core.Content.Load<Texture2D>("images/drago")},
+            { "helga", Core.Content.Load<Texture2D>("images/helga")},
+            { "lucek", Core.Content.Load<Texture2D>("images/lucek")},
+            { "pyrka", Core.Content.Load<Texture2D>("images/pyrka")},
+            { "rambo", Core.Content.Load<Texture2D>("images/rambo")},
+            { "ronan", Core.Content.Load<Texture2D>("images/ronan")},
+            { "sopel", Core.Content.Load<Texture2D>("images/sopel")},
+            { "wigor", Core.Content.Load<Texture2D>("images/wigor")},
+            { "zelda", Core.Content.Load<Texture2D>("images/zelda")},
+        };
 
+        _keyboardButtons = new List<LetterButton>();
+        DrawButtonGrid();
+
+        StartMainLoop();
     }
 
     public override void Update(GameTime gameTime)
     {
-        // Check for keyboard input and handle it.
-        CheckKeyboardInput();
-    }
-
-    private void CheckKeyboardInput()
-    {
-        // Get a reference to the keyboard inof
-        KeyboardInfo keyboard = Core.Input.Keyboard;
-        
-        // If the escape key is pressed, return to the title screen.
         if (Core.Input.Keyboard.WasKeyJustPressed(Keys.Escape))
         {
             Core.ChangeScene(new TitleScene());
+            return;
+        }
+
+        var mouse = Core.Input.Mouse;
+
+        foreach(var button in _keyboardButtons)
+        {
+            if(button.Bounds.Contains(mouse.Position) && mouse.WasButtonJustPressed(MouseButton.Left))
+            {
+                OnLetterPressed(button.Letter);
+                break;
+            }
         }
     }
 
-    private void DisplayAllLetters()
+    public override void Draw(GameTime gameTime)
     {
-        //var screen = Core.GraphicsDevice.PresentationParameters.Bounds;
+        Core.GraphicsDevice.Clear(Color.CornflowerBlue);
 
-        float scaledTile = LETTER_SIZE * LETTER_SCALE;
-        float scaledSpacing = SPACING * LETTER_SCALE;
+        Core.SpriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
-        int totalRows = (int)Math.Ceiling(_lettersInPlay.Length / (float)LETTER_COLUMNS);
+        DrawAnimals();
+        DrawGuessBoxes();
+        DrawAlphabetGrid();
 
-        Vector2 startPosition = new Vector2(350,650);
+        Core.SpriteBatch.End();
+    }
 
-        for (int i = 0; i < _lettersInPlay.Length; i++)
+
+    private void OnLetterPressed(char letter)
+    {
+        if (_guessIndex >= _currentGuess.Length)
+            return;
+
+        _currentGuess[_guessIndex].Letter = letter;
+        _guessIndex++;
+    }
+
+    private void DrawAnimals()
+    {
+        if (_currentAnimalTexture == null)
+            return;
+
+        Vector2 position = new Vector2(
+            1050,
+            _alphabetStart.Y - ANIMAL_TARGET_HEIGHT - 40
+        );
+
+        // Background scale
+        Vector2 bgScale = GetScaleToFit(
+            _animalBg,
+            ANIMAL_TARGET_WIDTH,
+            ANIMAL_TARGET_HEIGHT
+        );
+
+        // Animal scale
+        Vector2 animalScale = GetScaleToFit(
+            _currentAnimalTexture,
+            ANIMAL_TARGET_WIDTH,
+            ANIMAL_TARGET_HEIGHT
+        );
+
+        // Draw background frame
+        Core.SpriteBatch.Draw(
+            _animalBg,
+            position,
+            null,
+            Color.White,
+            0f,
+            Vector2.Zero,
+            bgScale,
+            SpriteEffects.None,
+            0f
+        );
+
+        // Draw animal on top
+        Core.SpriteBatch.Draw(
+            _currentAnimalTexture,
+            position,
+            null,
+            Color.White,
+            0f,
+            Vector2.Zero,
+            animalScale,
+            SpriteEffects.None,
+            0f
+        );
+    }
+
+    private void DrawGuessBoxes()
+    {
+        Vector2 scale = Vector2.One * LETTER_SCALE;
+
+        for (int i = 0; i < _currentGuess.Length; i++)
         {
-            Rectangle sourceRect = new Rectangle(
-                i * LETTER_SIZE,
-                0,
-                LETTER_SIZE,
-                LETTER_SIZE
+            var box = _currentGuess[i];
+
+            Vector2 position = new Vector2(
+                100 + i * (LETTER_SIZE * LETTER_SCALE + SPACING),
+                400
+            );
+
+            // Draw empty box background
+            Core.SpriteBatch.Draw(
+                _guessBoxTileset,
+                position,
+                null,
+                box.Color,     // tint for Wordle logic later
+                0f,
+                Vector2.Zero,
+                scale,
+                SpriteEffects.None,
+                0f
+            );
+
+            // Draw letter if present
+            if (box.Letter != '\0')
+            {
+                string letter = box.Letter.ToString();
+
+                Vector2 textSize = _font.MeasureString(letter);
+
+                Vector2 textPosition = position + new Vector2(
+                    (LETTER_SIZE * LETTER_SCALE - textSize.X) * 0.5f,
+                    (LETTER_SIZE * LETTER_SCALE - textSize.Y) * 0.5f
+                );
+
+                Core.SpriteBatch.DrawString(
+                    _font,
+                    letter,
+                    textPosition,
+                    Color.Black
+                );
+            }
+        }
+    }
+
+    private void DrawButtonGrid()
+    {
+        float tile = LETTER_SIZE * LETTER_SCALE;
+        float spacing = SPACING * LETTER_SCALE;
+
+        int totalRows = (int)Math.Ceiling(ALPHABET.Length / (float)LETTER_COLUMNS);
+
+        for (int i = 0; i < ALPHABET.Length; i++)
+        {
+            Rectangle source = new Rectangle(
+                i * LETTER_SIZE, 0, LETTER_SIZE, LETTER_SIZE
             );
 
             int row = i / LETTER_COLUMNS;
@@ -85,74 +222,126 @@ namespace Zoordle.Scenes
 
             int lettersInRow = LETTER_COLUMNS;
 
-            if (row == totalRows -1)
+            if (row == totalRows - 1)
             {
-                int remaining = _lettersInPlay.Length % LETTER_COLUMNS;
+                int remaining = ALPHABET.Length % LETTER_COLUMNS;
                 if (remaining != 0)
-                    {
-                        lettersInRow = remaining;
-                    }        
+                    lettersInRow = remaining;
             }
 
-            float rowWidth = lettersInRow * scaledTile + (lettersInRow -1) * scaledSpacing;
-            float fullRowWidth = LETTER_COLUMNS * scaledTile + (LETTER_COLUMNS - 1 ) * scaledSpacing;
+            float rowWidth =
+                lettersInRow * tile +
+                (lettersInRow - 1) * spacing;
+
+            float fullRowWidth =
+                LETTER_COLUMNS * tile +
+                (LETTER_COLUMNS - 1) * spacing;
+
             float centerOffsetX = (fullRowWidth - rowWidth) * 0.5f;
 
             Vector2 position = new Vector2(
-                startPosition.X + centerOffsetX + col * (scaledTile + scaledSpacing),
-                startPosition.Y + row * (scaledTile + scaledSpacing)
+                _alphabetStart.X + centerOffsetX + col * (tile + spacing),
+                _alphabetStart.Y + row * (tile + spacing)
             );
 
+            Rectangle bounds = new Rectangle(
+                (int)position.X,
+                (int)position.Y,
+                (int)tile,
+                (int)tile
+            );
+
+            _keyboardButtons.Add(new LetterButton
+            {
+                Letter = ALPHABET[i],
+                SourceRect = source,
+                Bounds = bounds
+            });
+        }
+    }
+
+    private void StartMainLoop()
+    {
+        var keys = new List<string>(_animalTextures.Keys);
+        _currentAnswer = keys[_rng.Next(keys.Count)];
+        _currentAnimalTexture = _animalTextures[_currentAnswer];
+
+        _guessIndex = 0;
+        _currentGuess = new GuessBox[_currentAnswer.Length];
+
+        for (int i = 0; i < _currentGuess.Length; i++)
+        {
+            _currentGuess[i] = new GuessBox
+            {
+                Letter = '\0',
+                Color = Color.White
+            };
+        }
+
+    }
+
+    private void DrawAlphabetGrid()
+    {
+        foreach (var button in _keyboardButtons)
+        {
             Core.SpriteBatch.Draw(
                 _letterTileset,
-                position,
-                sourceRect,
+                new Vector2(button.Bounds.X, button.Bounds.Y),
+                button.SourceRect,
                 Color.White,
                 0f,
                 Vector2.Zero,
-                2f,
+                LETTER_SCALE,
                 SpriteEffects.None,
                 0f
             );
         }
     }
 
-    public override void Draw(GameTime gameTime)
+    private Vector2 GetScaleToFit(Texture2D texture, int targetWidth, int targetHeight)
     {
-        // Clear the back buffer.
-        Core.GraphicsDevice.Clear(Color.CornflowerBlue);
-
-        // Begin the sprite batch to prepare for rendering.
-        Core.SpriteBatch.Begin(samplerState: SamplerState.PointClamp);
-
-        DisplayAllLetters();
-
-        // Always end the sprite batch when finished.
-        Core.SpriteBatch.End();
+        float scaleX = (float)targetWidth / texture.Width;
+        float scaleY = (float)targetHeight / texture.Height;
+        return new Vector2(scaleX, scaleY);
     }
-    private const int LETTER_SIZE = 64;
 
-    private const int LETTER_COLUMNS = 9;
+        private const int LETTER_SIZE = 64;
+        
+        private const int LETTER_COLUMNS = 9;
 
-    private const int SPACING = 67;
+        private const int SPACING = 6;
 
-    private const float LETTER_SCALE = 1.0f;
-    
-    // The SpriteFont Description used to draw text
-    private SpriteFont _font;
+        private const float LETTER_SCALE = 2.0f;
 
-    // The Sprite2d used for the all letter tiles.
-    private Texture2D _letterTileset;
+        private const int ANIMAL_TARGET_WIDTH = 300;
 
-    private List<Texture2D> _letterSprites;
+        private const int ANIMAL_TARGET_HEIGHT = 500;
 
-    private Rectangle _letterSourceRect;
+        private const string ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-    // The letters currently in play. A equal to 65, B = 66, etc.
-    private Enum[] _lettersInPlay = {
-        Keys.A, Keys.B, Keys.C, Keys.D, Keys.E, Keys.F, Keys.G, Keys.H,
-        Keys.I, Keys.J, Keys.K, Keys.L, Keys.M, Keys.N, Keys.O, Keys.P, Keys.Q,
-        Keys.R, Keys.S, Keys.T, Keys.U, Keys.V, Keys.W, Keys.X, Keys.Y, Keys.Z
-        };
-    }
+        private SpriteFont _font;
+
+        private Texture2D _letterTileset;
+
+        private Texture2D _guessBoxTileset;
+
+        private Dictionary<string, Texture2D> _animalTextures;   
+
+        private Texture2D _animalBg;    
+
+        private Texture2D _currentAnimalTexture;
+
+        private string _currentAnswer;
+
+        private Random _rng = new Random();
+
+        private Vector2 _alphabetStart = new Vector2(350, 650);
+
+        private List<LetterButton> _keyboardButtons;
+        
+        private GuessBox[] _currentGuess;
+
+        private int _guessIndex;
+
+        
 }
