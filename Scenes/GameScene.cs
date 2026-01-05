@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Security.Principal;
 using Microsoft.VisualBasic;
@@ -22,17 +23,7 @@ public class GameScene : Scene
         base.Initialize();
         Core.ExitOnEscape = false;
 
-        _currentGuess = new GuessBox[5];
-        _guessIndex = 0;
-
-        for (int i = 0; i < _currentGuess.Length; i++)
-        {
-            _currentGuess[i] = new GuessBox
-            {
-                Letter = '\0',
-                Color = Color.White
-            };
-        }
+        StartMainLoop();
     }
 
     public override void LoadContent()
@@ -44,22 +35,20 @@ public class GameScene : Scene
 
         _animalTextures = new Dictionary<string, Texture2D>
         {
-            { "chaki", Core.Content.Load<Texture2D>("images/chaki")},
-            { "drago", Core.Content.Load<Texture2D>("images/drago")},
-            { "helga", Core.Content.Load<Texture2D>("images/helga")},
-            { "lucek", Core.Content.Load<Texture2D>("images/lucek")},
-            { "pyrka", Core.Content.Load<Texture2D>("images/pyrka")},
-            { "rambo", Core.Content.Load<Texture2D>("images/rambo")},
-            { "ronan", Core.Content.Load<Texture2D>("images/ronan")},
-            { "sopel", Core.Content.Load<Texture2D>("images/sopel")},
-            { "wigor", Core.Content.Load<Texture2D>("images/wigor")},
-            { "zelda", Core.Content.Load<Texture2D>("images/zelda")},
+            { "CHAKI", Core.Content.Load<Texture2D>("images/chaki")},
+            { "DRAGO", Core.Content.Load<Texture2D>("images/drago")},
+            { "HELGA", Core.Content.Load<Texture2D>("images/helga")},
+            { "LUCEK", Core.Content.Load<Texture2D>("images/lucek")},
+            { "PYRKA", Core.Content.Load<Texture2D>("images/pyrka")},
+            { "RAMBO", Core.Content.Load<Texture2D>("images/rambo")},
+            { "RONAN", Core.Content.Load<Texture2D>("images/ronan")},
+            { "SOPEL", Core.Content.Load<Texture2D>("images/sopel")},
+            { "WIGOR", Core.Content.Load<Texture2D>("images/wigor")},
+            { "ZELDA", Core.Content.Load<Texture2D>("images/zelda")},
         };
 
         _keyboardButtons = new List<LetterButton>();
         DrawButtonGrid();
-
-        StartMainLoop();
     }
 
     public override void Update(GameTime gameTime)
@@ -68,6 +57,10 @@ public class GameScene : Scene
         {
             Core.ChangeScene(new TitleScene());
             return;
+        }
+
+        if (Core.Input.Keyboard.WasKeyJustPressed(Keys.Enter)){
+            OnEnterPressed();
         }
 
         var mouse = Core.Input.Mouse;
@@ -102,8 +95,52 @@ public class GameScene : Scene
             return;
 
         _currentGuess[_guessIndex].Letter = letter;
+        // _currentGuess[_guessIndex].State = GuessBoxState.Empty;
         _guessIndex++;
     }
+
+    private void OnEnterPressed()
+    {
+        // Only process if current guess is full
+        if (_guessIndex < _currentGuess.Length)
+            return;
+
+        // Evaluate the current guess and update letter states
+        EvaluateGuess();
+
+        // Lock the current guess into past guesses
+        GuessBox[] lockedGuess = new GuessBox[_currentGuess.Length];
+        for (int i = 0; i < _currentGuess.Length; i++)
+        {
+            lockedGuess[i] = new GuessBox
+            {
+                Letter = _currentGuess[i].Letter,
+                State = _currentGuess[i].State
+            };
+        }
+        _pastGuesses.Add(lockedGuess);
+
+        // Check if the guess was correct
+        if (IsCorrectGuess() || _pastGuesses.Count >= 4)
+        {
+            // Reset game: new answer, clear past guesses and keyboard
+            StartMainLoop();
+            _pastGuesses.Clear();
+            foreach (var button in _keyboardButtons)
+            {
+                button.State = GuessBoxState.Empty;
+            }
+            return;
+        }
+
+        // Prepare next guess
+        _guessIndex = 0;
+        for (int i = 0; i < _currentGuess.Length; i++)
+        {
+            _currentGuess[i].Letter = '\0';
+            _currentGuess[i].State = GuessBoxState.Empty;
+        }
+    }   
 
     private void DrawAnimals()
     {
@@ -128,11 +165,22 @@ public class GameScene : Scene
             ANIMAL_TARGET_WIDTH,
             ANIMAL_TARGET_HEIGHT
         );
+        
+            // scale background slightly bigger
+        bgScale = new Vector2(
+            (ANIMAL_TARGET_WIDTH + ANIMAL_BG_PADDING * 2) / (float)_animalBg.Width,
+            (ANIMAL_TARGET_HEIGHT + ANIMAL_BG_PADDING * 2) / (float)_animalBg.Height
+        );
 
+        // background position (offset so it surrounds animal)
+        Vector2 bgPosition = position - new Vector2(
+            ANIMAL_BG_PADDING,
+            ANIMAL_BG_PADDING
+        );
         // Draw background frame
         Core.SpriteBatch.Draw(
             _animalBg,
-            position,
+            bgPosition,
             null,
             Color.White,
             0f,
@@ -155,18 +203,66 @@ public class GameScene : Scene
             0f
         );
     }
-
     private void DrawGuessBoxes()
     {
         Vector2 scale = Vector2.One * LETTER_SCALE;
+        float startY = 50;
+        float spacingY = LETTER_SIZE * LETTER_SCALE + SPACING;
 
-        for (int i = 0; i < _currentGuess.Length; i++)
+        // Draw previous guesses
+        for (int row = 0; row < _pastGuesses.Count; row++)
+        {
+            var guessRow = _pastGuesses[row];
+
+            for (int i = 0; i < Math.Min(guessRow.Length, 5); i++)
+            {
+                var box = guessRow[i];
+                Vector2 position = new Vector2(
+                    100 + i * (LETTER_SIZE * LETTER_SCALE + SPACING),
+                    startY + row * spacingY
+                );
+
+                // Draw box background with color based on state
+                Core.SpriteBatch.Draw(
+                    _guessBoxTileset,
+                    position,
+                    null,
+                    box.Color,
+                    0f,
+                    Vector2.Zero,
+                    scale,
+                    SpriteEffects.None,
+                    0f
+                );
+
+                // Draw letter if present
+                if (box.Letter != '\0')
+                {
+                    string letter = box.Letter.ToString();
+                    Vector2 textSize = _font.MeasureString(letter);
+                    Vector2 textPosition = position + new Vector2(
+                        (LETTER_SIZE * LETTER_SCALE - textSize.X) * 0.5f,
+                        (LETTER_SIZE * LETTER_SCALE - textSize.Y) * 0.5f
+                    );
+
+                    Core.SpriteBatch.DrawString(
+                        _font,
+                        letter,
+                        textPosition,
+                        Color.Black
+                    );
+                }
+            }
+        }
+
+        int currentRow = _pastGuesses.Count;
+        for (int i = 0; i < Math.Min(_currentGuess.Length, 5); i++)
         {
             var box = _currentGuess[i];
 
             Vector2 position = new Vector2(
                 100 + i * (LETTER_SIZE * LETTER_SCALE + SPACING),
-                400
+                startY + currentRow * spacingY
             );
 
             // Draw empty box background
@@ -260,26 +356,6 @@ public class GameScene : Scene
         }
     }
 
-    private void StartMainLoop()
-    {
-        var keys = new List<string>(_animalTextures.Keys);
-        _currentAnswer = keys[_rng.Next(keys.Count)];
-        _currentAnimalTexture = _animalTextures[_currentAnswer];
-
-        _guessIndex = 0;
-        _currentGuess = new GuessBox[_currentAnswer.Length];
-
-        for (int i = 0; i < _currentGuess.Length; i++)
-        {
-            _currentGuess[i] = new GuessBox
-            {
-                Letter = '\0',
-                Color = Color.White
-            };
-        }
-
-    }
-
     private void DrawAlphabetGrid()
     {
         foreach (var button in _keyboardButtons)
@@ -288,7 +364,7 @@ public class GameScene : Scene
                 _letterTileset,
                 new Vector2(button.Bounds.X, button.Bounds.Y),
                 button.SourceRect,
-                Color.White,
+                button.Color,
                 0f,
                 Vector2.Zero,
                 LETTER_SCALE,
@@ -305,6 +381,99 @@ public class GameScene : Scene
         return new Vector2(scaleX, scaleY);
     }
 
+    private void EvaluateGuess()
+    {
+        string guess = _currentAnswer;
+        int length = guess.Length;
+
+        bool[] letterUsed = new bool[length];
+
+        for (int i = 0; i < length; i++)
+        {
+            if (_currentGuess[i].Letter == guess[i])
+            {
+                _currentGuess[i].State = GuessBoxState.Correct;
+                letterUsed[i] = true;
+            }
+        }
+
+        for (int i = 0; i < length; i++)
+        {
+            if (_currentGuess[i].State == GuessBoxState.Correct)
+                continue;
+
+            bool found = false;
+            for (int j = 0; j < length; j++)
+            {
+                if (!letterUsed[j] && _currentGuess[i].Letter == guess[j])
+                {
+                    found = true;
+                    letterUsed[j] = true;
+                    break;
+                }
+            }
+
+            _currentGuess[i].State = found ? GuessBoxState.Present : GuessBoxState.Absent;
+        }
+
+        foreach (var button in _keyboardButtons)
+        {
+            char btnLetter = char.ToUpper(button.Letter);
+
+            // Find all guesses that match this button
+            var matchingGuesses = _currentGuess.Where(g => char.ToUpper(g.Letter) == btnLetter);
+
+            foreach (var guessBox in matchingGuesses)
+            {
+                // Priority: Correct > Present > Absent > Empty
+                if (guessBox.State == GuessBoxState.Correct)
+                {
+                    button.State = GuessBoxState.Correct;
+                    break; // Once Correct, no need to check other occurrences
+                }
+                else if (guessBox.State == GuessBoxState.Present && button.State != GuessBoxState.Correct)
+                {
+                    button.State = GuessBoxState.Present;
+                }
+                else if (guessBox.State == GuessBoxState.Absent && button.State == GuessBoxState.Empty)
+                {
+                    button.State = GuessBoxState.Absent;
+                }
+            }
+        }
+        Console.WriteLine("Evaluated guess: " + new string(_currentGuess.Select(g => g.Letter).ToArray()));
+    }
+
+    private bool IsCorrectGuess()
+    {
+        foreach (var box in _currentGuess)
+        {
+            if (box.State != GuessBoxState.Correct)
+                return false;
+        }
+        return true;
+    }
+
+    private void StartMainLoop()
+    {
+        var keys = new List<string>(_animalTextures.Keys);
+        _currentAnswer = keys[_rng.Next(keys.Count)];
+
+        _currentAnimalTexture = _animalTextures[_currentAnswer];
+
+        _guessIndex = 0;
+        _currentGuess = new GuessBox[_currentAnswer.Length];
+
+        for (int i = 0; i < _currentGuess.Length; i++)
+        {
+            _currentGuess[i] = new GuessBox
+            {
+                Letter = '\0',
+                State = GuessBoxState.Empty
+            };
+        }
+    }
+
         private const int LETTER_SIZE = 64;
         
         private const int LETTER_COLUMNS = 9;
@@ -317,6 +486,8 @@ public class GameScene : Scene
 
         private const int ANIMAL_TARGET_HEIGHT = 500;
 
+        private const int ANIMAL_BG_PADDING = 12;
+
         private const string ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
         private SpriteFont _font;
@@ -324,6 +495,8 @@ public class GameScene : Scene
         private Texture2D _letterTileset;
 
         private Texture2D _guessBoxTileset;
+
+        private List<GuessBox[]> _pastGuesses = new List<GuessBox[]>();
 
         private Dictionary<string, Texture2D> _animalTextures;   
 

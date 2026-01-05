@@ -15,6 +15,13 @@ namespace MonoGameLibrary.Buttons
         public Rectangle Bounds { get; set;}
         public Rectangle SourceRect { get; set;} 
         public bool Enabled = true;
-        public Color Color = Color.White;
+        public GuessBoxState State { get; set; } = GuessBoxState.Empty;
+        public Color Color => State switch
+        {
+            GuessBoxState.Correct => Color.Green,
+            GuessBoxState.Present => Color.Yellow,
+            GuessBoxState.Absent => Color.Gray,
+            _ => Color.White,
+        };
     }
 }
