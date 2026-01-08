@@ -95,7 +95,6 @@ public class GameScene : Scene
             return;
 
         _currentGuess[_guessIndex].Letter = letter;
-        // _currentGuess[_guessIndex].State = GuessBoxState.Empty;
         _guessIndex++;
     }
 
@@ -270,7 +269,7 @@ public class GameScene : Scene
                 _guessBoxTileset,
                 position,
                 null,
-                box.Color,     // tint for Wordle logic later
+                box.Color,
                 0f,
                 Vector2.Zero,
                 scale,
@@ -299,7 +298,7 @@ public class GameScene : Scene
             }
         }
     }
-
+    // Logic similar to DrawGuessBoxes 
     private void DrawButtonGrid()
     {
         float tile = LETTER_SIZE * LETTER_SCALE;
@@ -473,48 +472,70 @@ public class GameScene : Scene
             };
         }
     }
+    /*
+        varibles
+    */
+    
+    // Base pixel size of a single letter tile (before scaling)
+    private const int LETTER_SIZE = 64;
 
-        private const int LETTER_SIZE = 64;
-        
-        private const int LETTER_COLUMNS = 9;
+    // Number of letters per keyboard row
+    private const int LETTER_COLUMNS = 9;
 
-        private const int SPACING = 6;
+    // Space in pixels between letters/tiles
+    private const int SPACING = 6;
 
-        private const float LETTER_SCALE = 2.0f;
+    // Scale multiplier applied to letters and boxes
+    private const float LETTER_SCALE = 2.0f;
 
-        private const int ANIMAL_TARGET_WIDTH = 300;
+    // Target width for displaying the animal image
+    private const int ANIMAL_TARGET_WIDTH = 300;
 
-        private const int ANIMAL_TARGET_HEIGHT = 500;
+    // Target height for displaying the animal image
+    private const int ANIMAL_TARGET_HEIGHT = 500;
 
-        private const int ANIMAL_BG_PADDING = 12;
+    // Padding around the animal background frame
+    private const int ANIMAL_BG_PADDING = 12;
 
-        private const string ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    // All supported keyboard letters
+    private const string ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-        private SpriteFont _font;
+    // Font used for drawing letters and text
+    private SpriteFont _font;
 
-        private Texture2D _letterTileset;
+    // Tileset texture containing alphabet letter sprites
+    private Texture2D _letterTileset;
 
-        private Texture2D _guessBoxTileset;
+    // Texture used for the guess box background
+    private Texture2D _guessBoxTileset;
 
-        private List<GuessBox[]> _pastGuesses = new List<GuessBox[]>();
+    // Stored previous guesses (one array per guess row)
+    private List<GuessBox[]> _pastGuesses = new List<GuessBox[]>();
 
-        private Dictionary<string, Texture2D> _animalTextures;   
+    // Mapping of animal names to their textures
+    private Dictionary<string, Texture2D> _animalTextures;
 
-        private Texture2D _animalBg;    
+    // Background frame texture behind the animal
+    private Texture2D _animalBg;
 
-        private Texture2D _currentAnimalTexture;
+    // Currently displayed animal texture
+    private Texture2D _currentAnimalTexture;
 
-        private string _currentAnswer;
+    // Correct answer word for the current round
+    private string _currentAnswer;
 
-        private Random _rng = new Random();
+    // Random generator for selecting animals
+    private Random _rng = new Random();
 
-        private Vector2 _alphabetStart = new Vector2(350, 650);
+    // Top-left position of the on-screen keyboard
+    private Vector2 _alphabetStart = new Vector2(350, 650);
 
-        private List<LetterButton> _keyboardButtons;
-        
-        private GuessBox[] _currentGuess;
+    // All interactive keyboard letter buttons
+    private List<LetterButton> _keyboardButtons;
 
-        private int _guessIndex;
+    // Currently active guess being typed
+    private GuessBox[] _currentGuess;
 
-        
+    // Index of the next letter to fill in the current guess
+    private int _guessIndex;
 }

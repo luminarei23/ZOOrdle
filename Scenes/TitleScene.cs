@@ -15,18 +15,16 @@ public class TitleScene : Scene
         // LoadContent is called during base.Initialize().
         base.Initialize();
 
-        // While on the title screen, we can enable exit on escape so the player
-        // can close the game by pressing the escape key.
         Core.ExitOnEscape = true;
 
         // Set the position and origin for the Dungeon text.
         Vector2 size = _font5x.MeasureString(ZOORDLE_TEXT);
-        _zoordleTextPos = new Vector2(640, 100);
+        _zoordleTextPos = new Vector2(960, 300);
         _zoordleTextOrigin = size * 0.5f;
 
         // Set the position and origin for the press enter text.
         size = _font.MeasureString(PRESS_ENTER_TEXT);
-        _pressEnterPos = new Vector2(640, 620);
+        _pressEnterPos = new Vector2(960, 620);
         _pressEnterOrigin = size * 0.5f;
     }
 
@@ -37,12 +35,6 @@ public class TitleScene : Scene
 
         // Load the font for the title text.
         _font5x = Content.Load<SpriteFont>("fonts/fonts");
-
-        // Texture2D lettersTexture = Core.Content.Load<Texture2D>("images/letter_background");
-
-        // _letterAtlas = TextureAtlas.FromGrid(lettersTexture, 64, 64, "letter");
-
-        // TextureAtlas bgAtlas = TextureAtlas.FromFile(Content, )
 
         Texture2D bgTexture = Content.Load<Texture2D>("images/background");
 
@@ -103,7 +95,6 @@ public class TitleScene : Scene
     // background of the scene
     private Sprite _background;
     
-
     // The font to use to render normal text.
     private SpriteFont _font;
 
