@@ -77,6 +77,11 @@ public class GameScene : Scene
                 break;
             }
         }
+
+        if (_gameOver && Core.Input.Keyboard.WasKeyJustPressed(Keys.Enter))
+        {
+            RaestartGame();
+        }
     }
 
     public override void Draw(GameTime gameTime)
@@ -88,6 +93,12 @@ public class GameScene : Scene
         DrawAnimals();
         DrawGuessBoxes();
         DrawAlphabetGrid();
+
+        if (_gameOver)
+        {
+            string endGameMessage = _playerWon ? "YOU WIN" : "GAME OVER";
+            Core.SpriteBatch.DrawString(_font, endGameMessage, new Vector2(960, 400), Color.Red, 0.0f, _font.MeasureString(endGameMessage) / 2, 1.5f, SpriteEffects.None, 0.0f);    
+        }
 
         Core.SpriteBatch.End();
     }
@@ -104,6 +115,10 @@ public class GameScene : Scene
 
     private void OnEnterPressed()
     {
+        // game state check
+        if (_gameOver)
+            return;
+            
         // Only process if current guess is full
         if (_guessIndex < _currentGuess.Length)
             return;
@@ -124,15 +139,17 @@ public class GameScene : Scene
         _pastGuesses.Add(lockedGuess);
 
         // Check if the guess was correct
-        if (IsCorrectGuess() || _pastGuesses.Count >= _maxRounds)
+        if (IsCorrectGuess())
         {
-            // Reset game: new answer, clear past guesses and keyboard
-            StartMainLoop();
-            _pastGuesses.Clear();
-            foreach (var button in _keyboardButtons)
-            {
-                button.State = GuessBoxState.Empty;
-            }
+             _playerWon = true;
+             _gameOver = true;
+             return;
+        }
+
+        if(_pastGuesses.Count >= _maxRounds)
+        {
+            _playerWon = false;
+            _gameOver = true;
             return;
         }
 
@@ -143,7 +160,19 @@ public class GameScene : Scene
             _currentGuess[i].Letter = '\0';
             _currentGuess[i].State = GuessBoxState.Empty;
         }
-    }   
+    }
+
+    private void RaestartGame()
+    {
+        _gameOver = false;
+        _playerWon = false;
+
+        StartMainLoop();
+        _pastGuesses.Clear();
+        
+        foreach (var button in _keyboardButtons)
+            button.State = GuessBoxState.Empty;
+    }
 
     private void DrawAnimals()
     {
@@ -545,4 +574,8 @@ public class GameScene : Scene
 
     // max number of rounds
     private int _maxRounds;
+    
+    // game state flags
+    private bool _gameOver = false;
+    private bool _playerWon = false;
 }
