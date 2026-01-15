@@ -18,6 +18,10 @@ namespace Zoordle.Scenes;
 
 public class GameScene : Scene
 {   
+    public GameScene(int maxRounds)
+    {
+        _maxRounds = maxRounds;
+    }
     public override void Initialize()
     {
         base.Initialize();
@@ -120,7 +124,7 @@ public class GameScene : Scene
         _pastGuesses.Add(lockedGuess);
 
         // Check if the guess was correct
-        if (IsCorrectGuess() || _pastGuesses.Count >= 4)
+        if (IsCorrectGuess() || _pastGuesses.Count >= _maxRounds)
         {
             // Reset game: new answer, clear past guesses and keyboard
             StartMainLoop();
@@ -538,4 +542,7 @@ public class GameScene : Scene
 
     // Index of the next letter to fill in the current guess
     private int _guessIndex;
+
+    // max number of rounds
+    private int _maxRounds;
 }
